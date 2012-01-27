@@ -1229,7 +1229,10 @@ void VersionSet::SetupOtherInputs(Compaction* c) {
   if (!c->inputs_[1].empty()) {
     std::vector<FileMetaData*> expanded0;
     current_->GetOverlappingInputs(level, &all_start, &all_limit, &expanded0);
-    if (expanded0.size() > c->inputs_[0].size()) {
+    if (expanded0.size() > 10) {
+        Log(options_->info_log, "Skipping expansion on level %d from %lu to %lu files\n",
+            level, c->inputs_[0].size(), expanded0.size());
+    } else if (expanded0.size() > c->inputs_[0].size()) {
       InternalKey new_start, new_limit;
       GetRange(expanded0, &new_start, &new_limit);
       std::vector<FileMetaData*> expanded1;
