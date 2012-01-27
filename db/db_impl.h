@@ -90,7 +90,8 @@ class DBImpl : public DB {
   void AcquireLoggingResponsibility(LoggerId* self);
   void ReleaseLoggingResponsibility(LoggerId* self);
 
-  Status MakeRoomForWrite(bool force /* compact even if there is room? */);
+  Status MakeRoomForWrite(bool force /* compact even if there is room? */,
+                          bool wait_for_compaction);
 
   struct CompactionState;
 

@@ -47,12 +47,18 @@ class Status {
   static Status IOError(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kIOError, msg, msg2);
   }
+  static Status WouldBlock() {
+    return Status(kWouldBlock, "op", "would block");
+  }
 
   // Returns true iff the status indicates success.
   bool ok() const { return (state_ == NULL); }
 
   // Returns true iff the status indicates a NotFound error.
   bool IsNotFound() const { return code() == kNotFound; }
+
+  // Returns true iff the status indicates a WouldBlock error.
+  bool IsWouldBlock() const { return code() == kWouldBlock; }
 
   // Return a string representation of this status suitable for printing.
   // Returns the string "OK" for success.
@@ -72,7 +78,8 @@ class Status {
     kCorruption = 2,
     kNotSupported = 3,
     kInvalidArgument = 4,
-    kIOError = 5
+    kIOError = 5,
+    kWouldBlock = 6
   };
 
   Code code() const {

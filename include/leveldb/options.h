@@ -177,8 +177,14 @@ struct WriteOptions {
   // Default: false
   bool sync;
 
+  // If true, the write MAY be blocked via a 1 ms sleep or waiting on
+  // a conditional variable until the number of L0 files is less than
+  // limit (12)
+  bool wait_for_compaction;
+
   WriteOptions()
-      : sync(false) {
+      : sync(false),
+        wait_for_compaction(true) {
   }
 };
 

@@ -557,7 +557,7 @@ Status DBImpl::TEST_CompactMemTable() {
   MutexLock l(&mutex_);
   LoggerId self;
   AcquireLoggingResponsibility(&self);
-  Status s = MakeRoomForWrite(true /* force compaction */);
+  Status s = MakeRoomForWrite(true /* force compaction */, true);
   ReleaseLoggingResponsibility(&self);
   if (s.ok()) {
     // Wait until the compaction completes
@@ -1115,7 +1115,10 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
   MutexLock l(&mutex_);
   LoggerId self;
   AcquireLoggingResponsibility(&self);
-  status = MakeRoomForWrite(false);  // May temporarily release lock and wait
+
+  // May temporarily release lock and wait
+  status = MakeRoomForWrite(false, options.wait_for_compaction);
+
   uint64_t last_sequence = versions_->LastSequence();
   if (status.ok()) {
     WriteBatchInternal::SetSequence(updates, last_sequence + 1);
@@ -1146,10 +1149,10 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
 
 // REQUIRES: mutex_ is held
 // REQUIRES: this thread is the current logger
-Status DBImpl::MakeRoomForWrite(bool force) {
+Status DBImpl::MakeRoomForWrite(bool force, bool wait_for_compaction) {
   mutex_.AssertHeld();
   assert(logger_ != NULL);
-  bool allow_delay = !force;
+  bool allow_delay = !force && wait_for_compaction;
   Status s;
   while (true) {
     if (!bg_error_.ok()) {
@@ -1176,11 +1179,19 @@ Status DBImpl::MakeRoomForWrite(bool force) {
     } else if (imm_ != NULL) {
       // We have filled up the current memtable, but the previous
       // one is still being compacted, so we wait.
-      bg_cv_.Wait();
+      if (wait_for_compaction) {
+          bg_cv_.Wait();
+      } else {
+          return Status::WouldBlock();
+      }
     } else if (versions_->NumLevelFiles(0) >= config::kL0_StopWritesTrigger) {
       // There are too many level-0 files.
-      Log(options_.info_log, "waiting...\n");
-      bg_cv_.Wait();
+      if (wait_for_compaction) {
+          Log(options_.info_log, "waiting...\n");
+          bg_cv_.Wait();
+      } else {
+          return Status::WouldBlock();
+      }
     } else {
       // Attempt to switch to a new memtable and trigger compaction of old
       assert(versions_->PrevLogNumber() == 0);
