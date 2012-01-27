@@ -946,8 +946,14 @@ void VersionSet::Finalize(Version* v) {
       // file size is small (perhaps because of a small write-buffer
       // setting, or very high compression ratios, or lots of
       // overwrites/deletions).
-      score = v->files_[level].size() /
-          static_cast<double>(config::kL0_CompactionTrigger);
+      if (v->files_[level].size() > config::kL0_CompactionTrigger) {
+          best_level = 0;
+          best_score = 100000;
+          break;
+      } else {
+          score = v->files_[level].size() /
+              static_cast<double>(config::kL0_CompactionTrigger);
+      }
     } else {
       // Compute the ratio of current size to size limit.
       const uint64_t level_bytes = TotalFileSize(v->files_[level]);
