@@ -18,6 +18,7 @@
 #include "util/random.h"
 #include "util/testharness.h"
 #include "util/testutil.h"
+#include <openssl/evp.h>
 
 using namespace leveldb;
 
@@ -31,6 +32,35 @@ struct KeyInfo
 
 typedef std::map<std::string, KeyInfo> KeyInfoDir;
 typedef std::pair<std::string, KeyInfo> KeyInfoDirPair;
+
+void print_hex(Slice s)
+{
+    for (int i = 0; i < s.size(); i++)
+    {
+        const char* format = (i < s.size()-1) ? "%d-" : "%d";
+        printf(format, (unsigned char)s.data()[i]);
+    }
+}
+
+void print_sha_digest(Slice s)
+{
+    EVP_MD_CTX mdctx;
+    const EVP_MD *md = EVP_sha1();
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+
+    EVP_MD_CTX_init(&mdctx);
+    EVP_DigestInit_ex(&mdctx, md, NULL);
+    EVP_DigestUpdate(&mdctx, s.data(), s.size());
+    EVP_DigestFinal_ex(&mdctx, md_value, &md_len);
+    EVP_MD_CTX_cleanup(&mdctx);
+
+    for(int i = 0; i < md_len; i++)
+    {
+        printf("%02x", md_value[i]);
+    }
+}
+
 
 Status process_file(std::string filename, Env* env, KeyInfoDir& keydir)
 {
@@ -71,18 +101,23 @@ Status process_file(std::string filename, Env* env, KeyInfoDir& keydir)
     itr->SeekToFirst();
     do
     {
-        Slice key = itr->key();
-        keydir_itr = keydir.find(key.ToString());
-        if (keydir_itr != keydir.end())
-        {
-            keydir_itr->second.count += 1;
-            keydir_itr->second.bytes += itr->value().size();
-        }
-        else
-        {
-            KeyInfoDirPair p(key.ToString(), KeyInfo(itr->value().size()));
-            keydir.insert(keydir_itr, p);
-        }
+        print_hex(itr->key());
+        printf(",");
+        print_sha_digest(itr->value());
+        printf(",");
+        printf("%lu\n", itr->value().size());
+        // Slice key = itr->key();
+        // keydir_itr = keydir.find(key.ToString());
+        // if (keydir_itr != keydir.end())
+        // {
+        //     keydir_itr->second.count += 1;
+        //     keydir_itr->second.bytes += itr->value().size();
+        // }
+        // else
+        // {
+        //     KeyInfoDirPair p(key.ToString(), KeyInfo(itr->value().size()));
+        //     keydir.insert(keydir_itr, p);
+        // }
         itr->Next();
     } while (itr->Valid());
 
@@ -131,7 +166,7 @@ int main(int argc, char** argv)
             int percent = ((processed * 1.0) / filenames.size()) * 100;
             if (processed % 100 == 0)
             {
-                printf("Processed %d files, %d%%\n", processed, percent);
+                fprintf(stderr,"Processed %d files, %d%%\n", processed, percent);
             }
         }
     }
@@ -144,8 +179,8 @@ int main(int argc, char** argv)
         max_count = ki.count > max_count ? ki.count : max_count;
     }
 
-    printf("Total keys: %lu\n", keydir.size());
-    printf("Max instances of a key: %d\n", max_count);
+    fprintf(stderr, "Total keys: %lu\n", keydir.size());
+    fprintf(stderr, "Max instances of a key: %d\n", max_count);
 
 
 }

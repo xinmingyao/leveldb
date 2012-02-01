@@ -124,7 +124,7 @@ readit: readit.o $(LIBOBJECTS) $(TESTUTIL)
 	$(CXX) $(LDFLAGS) readit.o $(LIBOBJECTS) $(TESTUTIL) -o $@
 
 stats: stats.o $(LIBOBJECTS) $(TESTUTIL)
-	$(CXX) $(LDFLAGS) stats.o $(LIBOBJECTS) $(TESTUTIL) -o $@
+	$(CXX) $(LDFLAGS) stats.o $(LIBOBJECTS) $(TESTUTIL) -o $@ -lcrypto
 
 db_bench: db/db_bench.o $(LIBOBJECTS) $(TESTUTIL)
 	$(CXX) $(LDFLAGS) db/db_bench.o $(LIBOBJECTS) $(TESTUTIL) -o $@
