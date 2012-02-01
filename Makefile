@@ -100,7 +100,7 @@ TESTS = \
 	version_set_test \
 	write_batch_test
 
-PROGRAMS = db_bench $(TESTS)
+PROGRAMS = db_bench stats readit $(TESTS)
 BENCHMARKS = db_bench_sqlite3 db_bench_tree_db
 
 LIBRARY = libleveldb.a
@@ -119,6 +119,12 @@ clean:
 $(LIBRARY): $(LIBOBJECTS)
 	rm -f $@
 	$(AR) -rs $@ $(LIBOBJECTS)
+
+readit: readit.o $(LIBOBJECTS) $(TESTUTIL)
+	$(CXX) $(LDFLAGS) readit.o $(LIBOBJECTS) $(TESTUTIL) -o $@
+
+stats: stats.o $(LIBOBJECTS) $(TESTUTIL)
+	$(CXX) $(LDFLAGS) stats.o $(LIBOBJECTS) $(TESTUTIL) -o $@
 
 db_bench: db/db_bench.o $(LIBOBJECTS) $(TESTUTIL)
 	$(CXX) $(LDFLAGS) db/db_bench.o $(LIBOBJECTS) $(TESTUTIL) -o $@
