@@ -6,7 +6,6 @@
 #define STORAGE_LEVELDB_DB_GC_MANAGER_H_
 
 #include <stdint.h>
-#include "db/log_format.h"
 #include "leveldb/slice.h"
 #include "leveldb/status.h"
 #include "leveldb/env.h"
