@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#ifndef STORAGE_LEVELDB_DB_LOG_WRITER_H_
-#define STORAGE_LEVELDB_DB_LOG_WRITER_H_
+#ifndef STORAGE_LEVELDB_DB_GC_MANAGER_H_
+#define STORAGE_LEVELDB_DB_GC_MANAGER_H_
 
 #include <stdint.h>
 #include "db/log_format.h"
@@ -36,11 +36,27 @@ namespace leveldb {
       ~GcManager();
       Status addKeyRange(char* prefix,char * start,char * end);
       Status deleteKeyRange(char* prefix);
-      bool shouldDrop(char * key);
+      bool shouldDrop(const char * key);
     private:
       std::map<char *,KeyRange,cmp_str> keyRanges;
     };
+    class GcFactory{
+    public:
+      static GcManager * getGcManger();
+      void freeGcManager();
+    private:
+      static GcManager * gcManager;
+    };
+    GcManager * GcFactory::getGcManger(){
+	if(gcManager==NULL){
+	  gcManager = new GcManager;
+	}
+	return gcManager;
+    }
+    void GcFactory::freeGcManager(){
+      delete gcManager;
+    }
   }
 }  // namespace leveldb
 
-#endif  // STORAGE_LEVELDB_DB_LOG_WRITER_H_
+#endif  
