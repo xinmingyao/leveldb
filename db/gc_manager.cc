@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include "db/gc_manager.h"
+#include "leveldb/gc_manager.h"
 
 #include <stdint.h>
 #include "leveldb/env.h"
@@ -11,7 +11,7 @@
 #include "stdio.h"
 namespace leveldb {
   namespace gc {
-    
+    GcManager GcFactory::_gcManager;
     GcManager::GcManager(){
       
     }
@@ -51,7 +51,8 @@ namespace leveldb {
 	    return r;
 	}
       }
+      return r;
     }
-    
+
   }  // namespace gc
 }  // namespace leveldb

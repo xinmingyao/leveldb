@@ -14,6 +14,8 @@
 #include <string>
 namespace leveldb {
   namespace gc{
+    class GcManager;
+    class GcFactory;
     struct KeyRange {
       KeyRange(){}
     KeyRange(char * start,char * end1)
@@ -40,22 +42,16 @@ namespace leveldb {
     private:
       std::map<char *,KeyRange,cmp_str> keyRanges;
     };
+    
     class GcFactory{
+      
     public:
-      static GcManager * getGcManger();
-      void freeGcManager();
-    private:
-      static GcManager * gcManager;
+      static GcManager  _gcManager;
+      static GcManager * getGcManager(){
+      return &_gcManager;
+      }
     };
-    GcManager * GcFactory::getGcManger(){
-	if(gcManager==NULL){
-	  gcManager = new GcManager;
-	}
-	return gcManager;
-    }
-    void GcFactory::freeGcManager(){
-      delete gcManager;
-    }
+    
   }
 }  // namespace leveldb
 

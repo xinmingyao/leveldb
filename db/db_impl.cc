@@ -32,7 +32,7 @@
 #include "util/coding.h"
 #include "util/logging.h"
 #include "util/mutexlock.h"
-#include "db/gc_manager.h"
+#include "leveldb/gc_manager.h"
 namespace leveldb {
 
 // Information kept for every waiting writer
@@ -954,7 +954,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       if (last_sequence_for_key <= compact->smallest_snapshot) {
         // Hidden by an newer entry for same user key
         drop = true;    // (A)
-      }else if(gc::GcFactory::getGcManger()->shouldDrop(ikey.user_key.data())){
+      }else if(gc::GcFactory::getGcManager()->shouldDrop(ikey.user_key.data())){//
 	//the key is in gc range
 	drop = true;
       } else if (ikey.type == kTypeDeletion &&
