@@ -954,7 +954,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       if (last_sequence_for_key <= compact->smallest_snapshot) {
         // Hidden by an newer entry for same user key
         drop = true;    // (A)
-      }else if(gc::GcFactory::getGcManager()->shouldDrop(ikey.user_key.data())){//
+      }else if(gc::GcFactory::getGcManager()->shouldDrop(ikey.user_key.data(),ikey.user_key.size())){//
 	//the key is in gc range
 	drop = true;
       } else if (ikey.type == kTypeDeletion &&

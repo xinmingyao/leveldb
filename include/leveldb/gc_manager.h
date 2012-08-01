@@ -15,31 +15,30 @@ namespace leveldb {
   namespace gc{
     class GcManager;
     class GcFactory;
-    struct KeyRange {
+    class KeyRange {
+    public:
       KeyRange(){}
-    KeyRange(char * start,char * end1)
-    : _start(start),_end(end1){}
-      char * _start;
-      char * _end;
+      KeyRange(std::string start,std::string end1){
+	_start=start;
+	_end=end1;
+      }
+      std::string _start;
+      std::string _end;
     };
     
-    struct cmp_str	{
-      bool operator()(char const *a,char const * b){
-	Slice c1(a,strlen(a));
-	Slice c2(b,strlen(b));
-	return c1.compare(c2);
-      }
+    
+    
       
-    };
+      
     class GcManager {
     public:
       GcManager();
       ~GcManager();
-      Status addKeyRange(char* prefix,char * start,char * end);
-      Status deleteKeyRange(char* prefix);
-      bool shouldDrop(const char * key);
+      void addKeyRange(std::string prefix,std::string start,std::string end);
+      void  deleteKeyRange(std::string prefix);
+      bool shouldDrop(const char * key,int length);
     private:
-      std::map<char *,KeyRange,cmp_str> keyRanges;
+      std::map<std::string,KeyRange> keyRanges;
     };
     
     class GcFactory{
