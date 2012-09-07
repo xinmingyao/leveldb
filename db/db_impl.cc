@@ -33,6 +33,7 @@
 #include "util/logging.h"
 #include "util/mutexlock.h"
 #include "leveldb/gc_manager.h"
+#include <iostream>
 namespace leveldb {
 
 // Information kept for every waiting writer
@@ -528,6 +529,8 @@ Status DBImpl::CompactMemTable() {
 }
 
 void DBImpl::CompactRange(const Slice* begin, const Slice* end) {
+  std::cout<<"Compact begin::"<<std::endl;
+  BackgroundCompaction();
   int max_level_with_files = 1;
   {
     MutexLock l(&mutex_);
@@ -542,6 +545,7 @@ void DBImpl::CompactRange(const Slice* begin, const Slice* end) {
   for (int level = 0; level < max_level_with_files; level++) {
     TEST_CompactRange(level, begin, end);
   }
+
 }
 
 void DBImpl::TEST_CompactRange(int level, const Slice* begin,const Slice* end) {
@@ -667,7 +671,7 @@ void DBImpl::BackgroundCall() {
 
 void DBImpl::BackgroundCompaction() {
   mutex_.AssertHeld();
-
+std::cout<<"22222::"<<std::endl;
   if (imm_ != NULL) {
     pthread_rwlock_rdlock(&gThreadLock0);
     CompactMemTable();
@@ -685,6 +689,7 @@ void DBImpl::BackgroundCompaction() {
     if (c != NULL) {
       manual_end = c->input(0, c->num_input_files(0) - 1)->largest;
     }
+    
     Log(options_.info_log,
         "Manual compaction at level-%d from %s .. %s; will stop at %s\n",
         m->level,
@@ -867,7 +872,7 @@ Status DBImpl::InstallCompactionResults(CompactionState* compact) {
 Status DBImpl::DoCompactionWork(CompactionState* compact) {
   const uint64_t start_micros = env_->NowMicros();
   int64_t imm_micros = 0;  // Micros spent doing imm_ compactions
-
+  std::cout<<"Compact begin::"<<std::endl;
   Log(options_.info_log,  "Compacting %d@%d + %d@%d files",
       compact->compaction->num_input_files(0),
       compact->compaction->level(),
@@ -954,7 +959,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       if (last_sequence_for_key <= compact->smallest_snapshot) {
         // Hidden by an newer entry for same user key
         drop = true;    // (A)
-      }else if(gc::GcFactory::getGcManager()->shouldDrop(ikey.user_key.data(),ikey.user_key.size())){//
+      }else if(gc::GcFactory::getGcManager()->shouldDrop(key.data(),key.size())){//
 	//the key is in gc range
 	drop = true;
       } else if (ikey.type == kTypeDeletion &&
