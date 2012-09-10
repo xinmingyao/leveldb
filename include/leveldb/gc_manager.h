@@ -37,6 +37,7 @@ namespace leveldb {
       void addKeyRange(std::string prefix,std::string start,std::string end);
       void  deleteKeyRange(std::string prefix);
       bool shouldDrop(const char * key,int length);
+      bool shouldGc();
     private:
       std::map<std::string,KeyRange> keyRanges;
     };

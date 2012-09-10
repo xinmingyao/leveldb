@@ -3,7 +3,7 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
 #include "leveldb/gc_manager.h"
-
+#include <iostream>
 #include <stdint.h>
 #include "leveldb/env.h"
 #include "util/coding.h"
@@ -30,7 +30,11 @@ namespace leveldb {
       keyRanges.erase(prefix);
       return ;
     }
+    bool GcManager::shouldGc(){
+      return keyRanges.size()>0;
+    }
     bool GcManager::shouldDrop(const char * key,int length){
+
       bool r =false;
       std::map<std::string,KeyRange>::iterator iter;
       for(iter=keyRanges.begin();iter!=keyRanges.end();iter++){

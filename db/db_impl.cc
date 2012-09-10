@@ -529,7 +529,6 @@ Status DBImpl::CompactMemTable() {
 }
 
 void DBImpl::CompactRange(const Slice* begin, const Slice* end) {
-  std::cout<<"Compact begin::"<<std::endl;
   BackgroundCompaction();
   int max_level_with_files = 1;
   {
@@ -671,7 +670,31 @@ void DBImpl::BackgroundCall() {
 
 void DBImpl::BackgroundCompaction() {
   mutex_.AssertHeld();
-std::cout<<"22222::"<<std::endl;
+
+  /* 
+     gc file 
+  */
+  if(gc::GcFactory::getGcManager()->shouldGc()){
+    for(int tl=0;tl<config::kNumLevels;tl++){
+      for (size_t i = 0; i < versions_->current()->files_[tl].size(); i++) {
+	FileMetaData* f = versions_->current()->files_[tl][i];
+	Slice largest=f->largest.user_key();
+	Slice small=f->smallest.user_key();
+	if(gc::GcFactory::getGcManager()->shouldDrop(largest.data(),largest.size())&&
+	   gc::GcFactory::getGcManager()->shouldDrop(small.data(),small.size())){
+	  VersionEdit edit;
+	  edit.DeleteFile(tl, f->number);
+	  Status s1=versions_->LogAndApply(&edit, &mutex_);
+	  Log(options_.info_log, "Delete #%lld for gc, level-%d %lld bytes %s\n",
+	      static_cast<unsigned long long>(f->number),
+	      tl,
+	      static_cast<unsigned long long>(f->file_size),
+	      s1.ToString().c_str());
+	}	 
+      }
+    }
+  }
+  
   if (imm_ != NULL) {
     pthread_rwlock_rdlock(&gThreadLock0);
     CompactMemTable();
@@ -872,7 +895,6 @@ Status DBImpl::InstallCompactionResults(CompactionState* compact) {
 Status DBImpl::DoCompactionWork(CompactionState* compact) {
   const uint64_t start_micros = env_->NowMicros();
   int64_t imm_micros = 0;  // Micros spent doing imm_ compactions
-  std::cout<<"Compact begin::"<<std::endl;
   Log(options_.info_log,  "Compacting %d@%d + %d@%d files",
       compact->compaction->num_input_files(0),
       compact->compaction->level(),
