@@ -11,8 +11,8 @@ INSTALL_PATH ?= $(CURDIR)
 # Uncomment exactly one of the lines labelled (A), (B), and (C) below
 # to switch between compilation modes.
 
-OPT ?= -O2 -DNDEBUG       # (A) Production use (optimized mode)
-# OPT ?= -g2              # (B) Debug mode, w/ full line-level debugging symbols
+#OPT ?= -O2 -DNDEBUG       # (A) Production use (optimized mode)
+OPT ?= -g2              # (B) Debug mode, w/ full line-level debugging symbols
 # OPT ?= -O2 -g2 -DNDEBUG # (C) Profiling mode: opt, but w/debugging symbols
 #-----------------------------------------------
 
@@ -52,6 +52,7 @@ TESTS = \
 	version_edit_test \
 	version_set_test \
 	write_batch_test \
+	zab_comparator_test \
 	gc_manager_test
 
 PROGRAMS = db_bench $(TESTS)
@@ -158,6 +159,8 @@ write_batch_test: db/write_batch_test.o $(LIBOBJECTS) $(TESTHARNESS)
 gc_manager_test: db/gc_manager_test.o $(LIBOBJECTS) $(TESTHARNESS)
 	$(CXX) db/gc_manager_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LDFLAGS)
 
+zab_comparator_test: util/zab_comparator_test.o $(LIBOBJECTS) $(TESTHARNESS)
+	$(CXX) util/zab_comparator_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LDFLAGS)
 $(MEMENVLIBRARY) : $(MEMENVOBJECTS)
 	rm -f $@
 	$(AR) -rs $@ $(MEMENVOBJECTS)

@@ -32,7 +32,7 @@
 #include "util/coding.h"
 #include "util/logging.h"
 #include "util/mutexlock.h"
-#include "leveldb/gc_manager.h"
+#include "util/zab_comparator.h"
 #include <iostream>
 namespace leveldb {
 
@@ -674,14 +674,15 @@ void DBImpl::BackgroundCompaction() {
   /* 
      gc file 
   */
-  if(gc::GcFactory::getGcManager()->shouldGc()){
+  if(user_comparator()->Name()=="leveldb.ZabComparatorImpl"){
     for(int tl=0;tl<config::kNumLevels;tl++){
       for (size_t i = 0; i < versions_->current()->files_[tl].size(); i++) {
 	FileMetaData* f = versions_->current()->files_[tl][i];
 	Slice largest=f->largest.user_key();
 	Slice small=f->smallest.user_key();
-	if(gc::GcFactory::getGcManager()->shouldDrop(largest.data(),largest.size())&&
-	   gc::GcFactory::getGcManager()->shouldDrop(small.data(),small.size())){
+	const zab::comparator::ZabComparatorImpl * cmp =reinterpret_cast<const zab::comparator::ZabComparatorImpl *>(user_comparator());
+	if(cmp->shouldDrop(this,largest)&&
+	   cmp->shouldDrop(this,small)){
 	  VersionEdit edit;
 	  edit.DeleteFile(tl, f->number);
 	  Status s1=versions_->LogAndApply(&edit, &mutex_);
@@ -981,10 +982,12 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       if (last_sequence_for_key <= compact->smallest_snapshot) {
         // Hidden by an newer entry for same user key
         drop = true;    // (A)
-      }else if(gc::GcFactory::getGcManager()->shouldDrop(key.data(),key.size())){//
+      }
+      //else if(gc::GcFactory::getGcManager()->shouldDrop(key.data(),key.size())){//
 	//the key is in gc range
-	drop = true;
-      } else if (ikey.type == kTypeDeletion &&
+	//drop = true;
+      //}
+      else if (ikey.type == kTypeDeletion &&
                  ikey.sequence <= compact->smallest_snapshot &&
                  compact->compaction->IsBaseLevelForKey(ikey.user_key)) {
         // For this user key:

@@ -19,34 +19,56 @@ namespace zab
     
     inline uint64_t Decode40(const char* ptr){
       if(leveldb::port::kLittleEndian){
-	uint64_t result;
-	char t[8];
-	memset(t,0,8);
-	memcpy(t+EPOCH_LENGTH,ptr,TXN_LENGH);
-	memcpy(&result,ptr,8);//gcc optimizes this to plain load,code from leveldb/util/coding.h
-	return result;
+	return((static_cast<uint64_t>(ptr[0]))
+	       |(static_cast<uint64_t>(ptr[1])<<8)
+	       |(static_cast<uint64_t>(ptr[2])<<16)
+	       |(static_cast<uint64_t>(ptr[3])<<24)
+	       |(static_cast<uint64_t>(ptr[4])<<32));		       
       }else {
-	uint64_t result;
-	return((static_cast<uint64_t>(ptr[0])<<24)
-	       |(static_cast<uint64_t>(ptr[0])<<32)
-	       |(static_cast<uint64_t>(ptr[0])<<40)
-	       |(static_cast<uint64_t>(ptr[0])<<48)
-	       |(static_cast<uint64_t>(ptr[0])<<56));		       
+	return((static_cast<uint64_t>(ptr[4]))
+	       |(static_cast<uint64_t>(ptr[3])<<8)
+	       |(static_cast<uint64_t>(ptr[2])<<16)
+	       |(static_cast<uint64_t>(ptr[1])<<24)
+	       |(static_cast<uint64_t>(ptr[0])<<32));		       
       }
     }
     
-    inline uint32_t Decode24(const char* ptr){
+    inline void Encode40(char * ptr,uint64_t value){
       if(leveldb::port::kLittleEndian){
-	uint32_t result;
+	char t[8];
+	memset(t,0,8);
+	memcpy(t,&value,8);
+	memcpy(ptr,t,5);
+      }else{
+	ptr[0]=value & 0xff;
+	ptr[1]=(value>>8) & 0xff;
+	ptr[2]=(value>>16) & 0xff;
+	ptr[3]=(value>>24) & 0xff;
+	ptr[4]=(value>>32) & 0xff;
+
+      }
+    }
+    inline void Encode24(char * ptr,uint32_t value){
+      if(leveldb::port::kLittleEndian){
 	char t[4];
 	memset(t,0,4);
-	memcpy(t,ptr+1,EPOCH_LENGTH);
-	memcpy(&result,t,4);//gcc optimizes this to plain load,code from leveldb/util/coding.h
-	return result;
+	memcpy(t,&value,4);
+	memcpy(ptr,t,3);
       }else{
-	return((static_cast<uint32_t>(ptr[0])<<8)
-	       |(static_cast<uint32_t>(ptr[0])<<16)
-	       |(static_cast<uint32_t>(ptr[0])<<24));		 
+	ptr[0]=value & 0xff;
+	ptr[1]=(value>>8) & 0xff;
+	ptr[2]=(value>>16) & 0xff;
+      }
+    }
+    inline uint32_t Decode24(const char* ptr){
+      if(leveldb::port::kLittleEndian){
+	return((static_cast<uint32_t>(ptr[0]))
+	       |(static_cast<uint32_t>(ptr[1])<<8)
+	       |(static_cast<uint32_t>(ptr[2])<<16));		 
+      }else{ 
+	return((static_cast<uint32_t>(ptr[2]))
+	       |(static_cast<uint32_t>(ptr[1])<<8)
+	       |(static_cast<uint32_t>(ptr[0])<<16));		 
       }
     }
   
@@ -60,7 +82,7 @@ namespace zab
     class  ZabKey{
     public:
       inline int compare(const ZabKey&b) const;
-      int shouldDrop(const ZabKey&b) const;
+      bool shouldDrop(const ZabKey&b) const;
       uint64_t bucket;
     protected:      
       uint32_t epoch;
@@ -101,7 +123,7 @@ namespace zab
           std::string* start,
           const leveldb::Slice& limit) const;
       virtual void FindShortSuccessor(std::string* key) const;
-      virtual int shouldDrop(leveldb::DB *db,const leveldb::Slice & b) const;
+      virtual bool shouldDrop(leveldb::DB *db,const leveldb::Slice & b) const;
     private:
       ZabKeyFactory * factory_;
       };

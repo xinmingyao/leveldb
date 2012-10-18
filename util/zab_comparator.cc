@@ -1,7 +1,7 @@
 
 #include "zab_comparator.h"
 namespace zab {
-
+ 
   namespace comparator {
 
     ZabKeyFactory::ZabKeyFactory(int t_){
@@ -22,23 +22,20 @@ namespace zab {
       }
     }
 
-    //gc key,bucket:0,epoch:0,txn_id:new bucket
+    //bucket gc key,bucket:0,epoch:0,txn_id:new bucket
     leveldb::Slice ZabKeyFactory::getBucketGcSlice(uint64_t new_bucket){
       char * s =(char *)malloc(key_length);
-     if(s==NULL){
-       exit(-1);
-     }
+      if(s==NULL){
+	exit(-1);
+      }
      memset(s,0,key_length);
      //only 40 bytes for new bucket
-     char t[8];
-     leveldb::EncodeFixed64(t,new_bucket);
-     if(type_==1){
-       memcpy(s+key_length-TXN_LENGH,t+EPOCH_LENGTH,TXN_LENGH);      
-     }else{
-       memcpy(s+key_length-TXN_LENGH,t+EPOCH_LENGTH,TXN_LENGH);
-     }
+     //char t[8];
+     //leveldb::EncodeFixed64(t,new_bucket);
+     Encode40(s+key_length-TXN_LENGH,new_bucket);
+    
      return leveldb::Slice(s,key_length);
-   }
+   }  
     /*
       the zab key: 
       bucket:8 or 64 bit
@@ -76,24 +73,24 @@ namespace zab {
       }
       return 0;
     }
-     int ZabKey::shouldDrop(const ZabKey& b) const{
+     bool ZabKey::shouldDrop(const ZabKey& b) const{
       if(bucket<b.bucket)
-	return -1;
+	return false;
       if(bucket>b.bucket)
-	return -1;
+	return false;
       if(epoch<b.epoch){
-	return -1;
+	return false;
       }
       if(epoch>b.epoch){
-	return 1;
+	return true;
       }
       if(txn_id<b.txn_id){
-	return -1;
+	return false;
       }
       if(txn_id>b.txn_id){
-	return 1;
+	return true;
       }
-      return 0;
+      return false;
     }
     ZabComparatorImpl::~ZabComparatorImpl(){
       delete factory_; 
@@ -103,15 +100,15 @@ namespace zab {
     }
 
     const char* ZabComparatorImpl::Name() const {
-      return "leveldb.ZabKeyComparator";
+      return "leveldb.ZabComparatorImpl";
     }
-
+ 
     int ZabComparatorImpl::Compare(const leveldb::Slice& a, const leveldb::Slice& b) const {
       ZabKey a1=factory_->getZabKey(a.data());
       ZabKey b1=factory_->getZabKey(b.data());
       return a1.compare(b1);
     }
-
+   
     void ZabComparatorImpl::FindShortestSeparator(
       std::string* start,
       const leveldb::Slice& limit) const {
@@ -149,7 +146,7 @@ namespace zab {
       }
       // *key is a run of 0xffs.  Leave it alone.
     }
-    int ZabComparatorImpl::shouldDrop(leveldb::DB *db,const leveldb::Slice &key) const{
+    bool ZabComparatorImpl::shouldDrop(leveldb::DB *db,const leveldb::Slice &key) const{
       ZabKey k1= factory_->getZabKey(key.data());;
       leveldb::Slice s=factory_->getBucketGcSlice(k1.bucket);
       std::string sval;
