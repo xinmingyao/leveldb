@@ -13,70 +13,44 @@
 #include "port/port.h"
 namespace zab
 {
-
+  //data from erlang use little endian
   namespace comparator
   {
-    
-    inline uint64_t Decode40(const char* ptr){
-      if(leveldb::port::kLittleEndian){
-	return((static_cast<uint64_t>(ptr[0]))
-	       |(static_cast<uint64_t>(ptr[1])<<8)
-	       |(static_cast<uint64_t>(ptr[2])<<16)
-	       |(static_cast<uint64_t>(ptr[3])<<24)
-	       |(static_cast<uint64_t>(ptr[4])<<32));		       
-      }else {
-	return((static_cast<uint64_t>(ptr[4]))
-	       |(static_cast<uint64_t>(ptr[3])<<8)
-	       |(static_cast<uint64_t>(ptr[2])<<16)
-	       |(static_cast<uint64_t>(ptr[1])<<24)
-	       |(static_cast<uint64_t>(ptr[0])<<32));		       
-      }
-    }
-    
-    inline void Encode40(char * ptr,uint64_t value){
-      if(leveldb::port::kLittleEndian){
-	char t[8];
-	memset(t,0,8);
-	memcpy(t,&value,8);
-	memcpy(ptr,t,5);
-      }else{
-	ptr[0]=value & 0xff;
-	ptr[1]=(value>>8) & 0xff;
-	ptr[2]=(value>>16) & 0xff;
-	ptr[3]=(value>>24) & 0xff;
-	ptr[4]=(value>>32) & 0xff;
 
-      }
-    }
-    inline void Encode24(char * ptr,uint32_t value){
-      if(leveldb::port::kLittleEndian){
-	char t[4];
-	memset(t,0,4);
-	memcpy(t,&value,4);
-	memcpy(ptr,t,3);
-      }else{
-	ptr[0]=value & 0xff;
-	ptr[1]=(value>>8) & 0xff;
-	ptr[2]=(value>>16) & 0xff;
-      }
-    }
-    inline uint32_t Decode24(const char* ptr){
-      if(leveldb::port::kLittleEndian){
-	return((static_cast<uint32_t>(ptr[0]))
-	       |(static_cast<uint32_t>(ptr[1])<<8)
-	       |(static_cast<uint32_t>(ptr[2])<<16));		 
-      }else{ 
-	return((static_cast<uint32_t>(ptr[2]))
-	       |(static_cast<uint32_t>(ptr[1])<<8)
-	       |(static_cast<uint32_t>(ptr[0])<<16));		 
-      }
-    }
-  
     inline uint8_t Decode8(const char* ptr){
       uint8_t result;
       memcpy(&result,ptr,sizeof(result));
       return result;
     }
+    
+    inline uint64_t Decode40(const char* ptr){
+      uint64_t lo =leveldb::DecodeFixed32(ptr);
+      uint64_t hi =Decode8(ptr+4);
+      return (hi<<32|lo);
+	
+    }
+    
+    inline void Encode40(char * ptr,uint64_t value){
+	ptr[0]=value & 0xff;
+	ptr[1]=(value>>8) & 0xff;
+	ptr[2]=(value>>16) & 0xff;
+	ptr[3]=(value>>24) & 0xff;
+	ptr[4]=(value>>32) & 0xff;
+    }
+    inline void Encode24(char * ptr,uint32_t value){
+     	ptr[0]=value & 0xff;
+	ptr[1]=(value>>8) & 0xff;
+	ptr[2]=(value>>16) & 0xff;
+     
+    }
+    inline uint32_t Decode24(const char* ptr){
+      char t[4];
+      memset(t,0,4);
+      memcpy(t,ptr,3);
+      return leveldb::DecodeFixed32(t);
+    }
+  
+
  
 
     class  ZabKey{

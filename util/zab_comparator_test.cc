@@ -14,7 +14,22 @@ namespace zab {
     
     class ZabComparatorTest {
     };
-      
+       
+    TEST(ZabComparatorTest,Codec_40) {
+      int64_t t2_40 = 1099511627775;
+      char t1[5];
+      memset(t1,0,5);
+      Encode40(t1,t2_40);
+      ASSERT_EQ(t2_40,Decode40(t1));
+    }
+    TEST(ZabComparatorTest,Codec_24) {      
+      int32_t t2_24 = 16777215;
+      char ptr[3];
+       memset(ptr,0,3);
+      Encode24(ptr,t2_24);
+      ASSERT_EQ(t2_24,Decode24(ptr));
+    }
+    
     TEST(ZabComparatorTest, Parse) {      
       char t[9];
       memset(t,0,9);

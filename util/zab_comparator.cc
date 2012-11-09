@@ -53,7 +53,7 @@ namespace zab {
       epoch=Decode24(data+1);
       txn_id=Decode40(data+4);
     }
-
+     
     inline int ZabKey::compare(const ZabKey& b) const{
       if(bucket<b.bucket)
 	return -1;
