@@ -98,6 +98,7 @@ namespace zab
           const leveldb::Slice& limit) const;
       virtual void FindShortSuccessor(std::string* key) const;
       virtual bool shouldDrop(leveldb::DB *db,const leveldb::Slice & b) const;
+      leveldb::DB * gc_db;
     private:
       ZabKeyFactory * factory_;
       };

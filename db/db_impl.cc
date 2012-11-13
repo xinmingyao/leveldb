@@ -33,7 +33,7 @@
 #include "util/logging.h"
 #include "util/mutexlock.h"
 #include "util/zab_comparator.h"
-#include <iostream>
+#include <stdio.h>
 namespace leveldb {
 
 // Information kept for every waiting writer
@@ -674,18 +674,20 @@ void DBImpl::BackgroundCompaction() {
   /* 
      gc file 
   */
-  if(user_comparator()->Name()=="leveldb.ZabComparatorImpl"){
+  if(strcmp(user_comparator()->Name(),"leveldb.ZabComparatorImpl")==0){
     for(int tl=0;tl<config::kNumLevels;tl++){
       for (size_t i = 0; i < versions_->current()->files_[tl].size(); i++) {
 	FileMetaData* f = versions_->current()->files_[tl][i];
 	Slice largest=f->largest.user_key();
 	Slice small=f->smallest.user_key();
+
 	const zab::comparator::ZabComparatorImpl * cmp =reinterpret_cast<const zab::comparator::ZabComparatorImpl *>(user_comparator());
 	if(cmp->shouldDrop(this,largest)&&
 	   cmp->shouldDrop(this,small)){
 	  VersionEdit edit;
 	  edit.DeleteFile(tl, f->number);
 	  Status s1=versions_->LogAndApply(&edit, &mutex_);
+	  //printf("delete %lld \n",static_cast<unsigned long long>(f->number));
 	  Log(options_.info_log, "Delete #%lld for gc, level-%d %lld bytes %s\n",
 	      static_cast<unsigned long long>(f->number),
 	      tl,

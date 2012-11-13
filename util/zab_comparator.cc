@@ -1,5 +1,6 @@
 
 #include "zab_comparator.h"
+#include <stdio.h>
 namespace zab {
  
   namespace comparator {
@@ -152,7 +153,7 @@ namespace zab {
       std::string sval;
       leveldb::ReadOptions opt;
       opt.fill_cache=true;
-      leveldb::Status status = db->Get(opt,s, &sval);
+      leveldb::Status status = gc_db->Get(opt,s, &sval);
       if (status.ok())
         {
 	  ZabKey k3=factory_->getZabKey(sval.data());

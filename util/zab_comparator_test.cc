@@ -30,6 +30,56 @@ namespace zab {
       ASSERT_EQ(t2_24,Decode24(ptr));
     }
     
+
+    void codec(char * t,uint8_t bucket,uint32_t epoch,uint64_t txn_id){
+      memcpy(t,&bucket,1);
+      Encode24(t+1,epoch);
+      Encode40(t+4,txn_id);
+      
+    }
+
+     TEST(ZabComparatorTest,ShoudDrop) {      
+       
+       char t1[9],t2[9],gc[9],gc_value[9];
+       memset(t1,0,9);
+       memset(t2,0,9);
+       memset(gc,0,9);
+       memset(gc_value,0,9);
+       codec(t1,1,1,256);
+       codec(t2,1,1,260);
+       codec(gc,0,0,1);
+       codec(gc_value,1,1,258);
+       
+       
+      leveldb::Slice k1= leveldb::Slice(t1,9);
+      leveldb::Slice k2= leveldb::Slice(t2,9);
+      leveldb::Slice gc_key= leveldb::Slice(gc,9);
+      leveldb::Slice gc_slice= leveldb::Slice(gc_value,9);
+      
+      // gc db
+      leveldb::DB* gc_db_;
+      leveldb::Options gc_opts;
+      gc_opts.create_if_missing=true;
+      ASSERT_OK(leveldb::DB::Open(gc_opts,leveldb::test::TmpDir() + "/db_gc1", &gc_db_));
+      ASSERT_OK(gc_db_->Put(leveldb::WriteOptions(), gc_key, gc_slice));
+      //
+      leveldb::DB* db_;
+      leveldb::Options opts;
+      ZabComparatorImpl zabc =  ZabComparatorImpl(1);
+      zabc.gc_db=gc_db_;
+      opts.comparator=&zabc;
+      std::string dbname_ = leveldb::test::TmpDir() + "/db_test9";
+      opts.create_if_missing = true;
+      
+      ASSERT_OK(leveldb::DB::Open(opts, dbname_, &db_));
+      ASSERT_OK(db_->Put(leveldb::WriteOptions(), k1, std::string("test")));            
+      ASSERT_OK(db_->Put(leveldb::WriteOptions(), k2, std::string("test")));            
+      
+      ASSERT_TRUE(zabc.shouldDrop(db_,k1));
+      ASSERT_TRUE(!zabc.shouldDrop(db_,k2));
+
+    }
+
     TEST(ZabComparatorTest, Parse) {      
       char t[9];
       memset(t,0,9);
@@ -110,9 +160,9 @@ namespace zab {
       ZabKey z2=facotry.getZabKey(m);
       ZabKey z3 =facotry.getZabKey(gc);
       //ASSERT_EQ(gc_slice,sss);
-      ASSERT_OK(db_->Put(leveldb::WriteOptions(),gc_slice, gc_value_slice));            
-      ASSERT_TRUE(zabc.shouldDrop(db_,key));
-      ASSERT_TRUE(!zabc.shouldDrop(db_,key2));
+      //ASSERT_OK(db_->Put(leveldb::WriteOptions(),gc_slice, gc_value_slice));            
+      //ASSERT_TRUE(zabc.shouldDrop(db_,key));
+      //ASSERT_TRUE(!zabc.shouldDrop(db_,key2));
     }
   }
 }  // namespace leveldb
