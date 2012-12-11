@@ -24,7 +24,7 @@ include build_config.mk
 CFLAGS += -I. -I./include $(PLATFORM_CCFLAGS) $(OPT)
 CXXFLAGS += -I. -I./include $(PLATFORM_CXXFLAGS) $(OPT)
 
-LDFLAGS += $(PLATFORM_LDFLAGS)
+LDFLAGS += $(PLATFORM_LDFLAGS) -lrt
 
 LIBOBJECTS = $(SOURCES:.cc=.o)
 MEMENVOBJECTS = $(MEMENV_SOURCES:.cc=.o)
@@ -160,7 +160,7 @@ gc_manager_test: db/gc_manager_test.o $(LIBOBJECTS) $(TESTHARNESS)
 	$(CXX) db/gc_manager_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LDFLAGS)
 
 zab_comparator_test: util/zab_comparator_test.o $(LIBOBJECTS) $(TESTHARNESS)
-	$(CXX) util/zab_comparator_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LDFLAGS)
+	$(CXX) util/zab_comparator_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LDFLAGS) 
 $(MEMENVLIBRARY) : $(MEMENVOBJECTS)
 	rm -f $@
 	$(AR) -rs $@ $(MEMENVOBJECTS)
