@@ -699,8 +699,8 @@ void DBImpl::BackgroundCompaction() {
 	Slice small=f->smallest.user_key();
 
 	const zab::comparator::ZabComparatorImpl * cmp =reinterpret_cast<const zab::comparator::ZabComparatorImpl *>(user_comparator());
-	if(cmp->shouldDrop(this,largest)&&
-	   cmp->shouldDrop(this,small)){
+	if(cmp->shouldDrop(largest)&&
+	   cmp->shouldDrop(small)){
 	  VersionEdit edit;
 	  edit.DeleteFile(tl, f->number);
 	  Status s1=versions_->LogAndApply(&edit, &mutex_);
@@ -979,7 +979,13 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       if (last_sequence_for_key <= compact->smallest_snapshot) {
         // Hidden by an newer entry for same user key
         drop = true;    // (A)
+      }else if(strcmp(user_comparator()->Name(),"leveldb.ZabComparatorImpl")==0){ //drop gc key
+	const zab::comparator::ZabComparatorImpl * cmp =reinterpret_cast<const zab::comparator::ZabComparatorImpl *>(user_comparator());
+	if(cmp->shouldDrop(ikey.user_key)){
+	    drop=true; 
+	  }
       }
+
       //else if(gc::GcFactory::getGcManager()->shouldDrop(key.data(),key.size())){//
 	//the key is in gc range
 	//drop = true;

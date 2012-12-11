@@ -75,8 +75,8 @@ namespace zab {
       ASSERT_OK(db_->Put(leveldb::WriteOptions(), k1, std::string("test")));            
       ASSERT_OK(db_->Put(leveldb::WriteOptions(), k2, std::string("test")));            
       
-      ASSERT_TRUE(zabc.shouldDrop(db_,k1));
-      ASSERT_TRUE(!zabc.shouldDrop(db_,k2));
+      ASSERT_TRUE(zabc.shouldDrop(k1));
+      ASSERT_TRUE(!zabc.shouldDrop(k2));
 
     }
 

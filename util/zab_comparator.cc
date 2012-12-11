@@ -147,7 +147,7 @@ namespace zab {
       }
       // *key is a run of 0xffs.  Leave it alone.
     }
-    bool ZabComparatorImpl::shouldDrop(leveldb::DB *db,const leveldb::Slice &key) const{
+    bool ZabComparatorImpl::shouldDrop(const leveldb::Slice &key) const{
       ZabKey k1= factory_->getZabKey(key.data());;
       leveldb::Slice s=factory_->getBucketGcSlice(k1.bucket);
       std::string sval;
